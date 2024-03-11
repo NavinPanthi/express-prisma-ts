@@ -2,6 +2,8 @@ import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 
+import { authorRouter } from "./author/author.router";
+
 dotenv.config();
 //load environment variables from a .env file into process.env.
 if (!process.env.PORT) {
@@ -15,6 +17,8 @@ app.use(cors());
 // This line adds the CORS (Cross-Origin Resource Sharing) middleware to your Express application.
 app.use(express.json());
 // parse incoming requests with JSON payloads.
+
+app.use("/api/authors", authorRouter);
 
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
