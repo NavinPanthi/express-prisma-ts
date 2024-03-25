@@ -7,8 +7,10 @@
 
 import express from "express";
 import { Request, Response } from "express";
-// import { body, validationResult } from "express";
+import * as dotenv from "dotenv";
 
+dotenv.config(); //load environment variables from a .env file into process.env.
+const jwt = require("jsonwebtoken");
 import * as UserService from "../user/user.service";
 import { body, validationResult } from "express-validator";
 
@@ -79,20 +81,31 @@ userRouter.post(
     }
     try {
       const user = request.body;
+      // check if user with unique email extists.
       const userExists = await UserService.loginUser(user);
       if (!userExists) {
         return response.status(404).json({ error: "User not found" });
       }
+      //password hashing for authentication.
       const isMatch = await bcrypt.compare(user.password, userExists.password); //compare password using bcrypt
       if (!isMatch) {
         return response.status(401).json({ error: "Invalid credentials" });
       }
-      return response.status(201).json(userExists);
+      // JWT token authorization
+      const userPayLoad = { id: userExists.id };
+      const token = jwt.sign(userPayLoad, process.env.ACCESS_TOKEN_SECRET);
+      //
+      const userWithToken = {
+        ...userExists,
+        token,
+      };
+      return response.status(201).json(userWithToken);
     } catch (error: any) {
       return response.status(500).json(error.message);
     }
   }
 );
+
 // DELETE : delete all users
 userRouter.delete("/", async (request: Request, response: Response) => {
   try {
