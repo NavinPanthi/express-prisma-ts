@@ -8,6 +8,7 @@ import { db } from "../utils/db.server";
 import express from "express";
 import { Request, Response } from "express";
 // import { body, validationResult } from "express";
+const verifyToken = require("../middleware/verifyToken");
 
 import * as BookService from "../book/book.service";
 import { body, validationResult } from "express-validator";
@@ -15,9 +16,11 @@ import { body, validationResult } from "express-validator";
 export const bookRouter = express.Router();
 
 // GET : list of all books
-bookRouter.get("/", async (request: Request, response: Response) => {
+//Using verifyToken middleware to  ensure that only logged in users can access this route
+bookRouter.get("/", verifyToken, async (request: any, response: Response) => {
   try {
     const books = await BookService.listBooks();
+    console.log(request.user.id); //this is the id of the logged in user received from the middleware.
     if (books.length === 0) {
       return response.status(400).json({ error: "No books found" });
     }
@@ -28,20 +31,24 @@ bookRouter.get("/", async (request: Request, response: Response) => {
   }
 });
 // GET : a book
-bookRouter.get("/:id", async (request: Request, response: Response) => {
-  const id: number = parseInt(request.params.id, 10);
-  try {
-    const book = await BookService.getBook(id);
-    if (!book) {
-      return response
-        .status(404)
-        .json({ error: `Book with the id ${id} not found ` });
+bookRouter.get(
+  "/:id",
+
+  async (request: Request, response: Response) => {
+    const id: number = parseInt(request.params.id, 10);
+    try {
+      const book = await BookService.getBook(id);
+      if (!book) {
+        return response
+          .status(404)
+          .json({ error: `Book with the id ${id} not found ` });
+      }
+      return response.status(200).json(book);
+    } catch (error: any) {
+      return response.status(500).json(error.message);
     }
-    return response.status(200).json(book);
-  } catch (error: any) {
-    return response.status(500).json(error.message);
   }
-});
+);
 // POST : create a new book
 bookRouter.post(
   "/",
