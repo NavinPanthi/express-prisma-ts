@@ -4,6 +4,7 @@ import cors from "cors";
 
 import { authorRouter } from "./author/author.router";
 import { bookRouter } from "./book/book.router";
+import { userRouter } from "./user/user.router";
 
 dotenv.config();
 //load environment variables from a .env file into process.env.
@@ -21,6 +22,8 @@ app.use(express.json());
 
 app.use("/api/authors", authorRouter);
 app.use("/api/books", bookRouter);
+app.use("/api/users", userRouter);
+
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
 });
