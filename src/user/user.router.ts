@@ -13,9 +13,11 @@ dotenv.config(); //load environment variables from a .env file into process.env.
 const jwt = require("jsonwebtoken");
 import * as UserService from "../user/user.service";
 import { body, validationResult } from "express-validator";
+import { request } from "http";
 
 export const userRouter = express.Router();
 const bcrypt = require("bcrypt");
+let refreshTokens: any = [];
 
 // GET : list of all users
 userRouter.get("/", async (request: Request, response: Response) => {
@@ -70,6 +72,12 @@ userRouter.post(
 );
 
 //POST : login a user
+const generateToken = (userPayLoad: any) => {
+  return jwt.sign(userPayLoad, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "20s",
+  });
+};
+
 userRouter.post(
   "/login",
   body("email").isEmail().isString().notEmpty(),
@@ -93,11 +101,17 @@ userRouter.post(
       }
       // JWT token authorization
       const userPayLoad = { id: userExists.id };
-      const token = jwt.sign(userPayLoad, process.env.ACCESS_TOKEN_SECRET);
+      const accessToken = generateToken(userPayLoad);
+      const refreshToken = jwt.sign(
+        userPayLoad,
+        process.env.REFRESH_TOKEN_SECRET
+      );
       //
+      refreshTokens.push(refreshToken);
       const userWithToken = {
         ...userExists,
-        token,
+        accessToken,
+        refreshToken,
       };
       return response.status(201).json(userWithToken);
     } catch (error: any) {
@@ -105,7 +119,25 @@ userRouter.post(
     }
   }
 );
-
+//create a access token using refresh token when access token get expired after 20 seconds
+userRouter.post("/token", (request: Request, response: Response) => {
+  const refreshToken = request.body.token;
+  if (refreshToken == null) return response.status(401).json("No token");
+  if (!refreshTokens.includes(refreshToken)) {
+    return response.status(403).json("Refresh token is not valid");
+  }
+  jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET,
+    (err: any, user: any) => {
+      console.log("user", user);
+      if (err) return response.sendStatus(403);
+      const userPayLoad = { id: user.id };
+      const accessToken = generateToken(userPayLoad);
+      return response.status(200).json({ accessToken: accessToken });
+    }
+  );
+});
 // DELETE : delete all users
 userRouter.delete("/", async (request: Request, response: Response) => {
   try {
@@ -114,4 +146,11 @@ userRouter.delete("/", async (request: Request, response: Response) => {
   } catch (error: any) {
     return response.status(500).json(error.message);
   }
+});
+
+//deleting the refresh token which is used to create a new access token.
+userRouter.delete("/logout", async (request: Request, response: Response) => {
+  const refreshToken = request.body.token;
+  refreshTokens = refreshTokens.filter((token: any) => token !== refreshToken);
+  return response.sendStatus(204);
 });
