@@ -9,14 +9,14 @@ interface Book {
 }
 
 interface BookRead extends Book {
-  author: Author;
+  author: Author | null;
 }
 interface BookWrite extends Book {
   authorId: number;
 }
 
 export const listBooks = async (): Promise<BookRead[]> => {
-  return db.book.findMany({
+  const books = await db.book.findMany({
     select: {
       id: true,
       title: true,
@@ -30,6 +30,31 @@ export const listBooks = async (): Promise<BookRead[]> => {
         },
       },
     },
+  });
+
+  // Check if books array is empty
+  if (books.length === 0) {
+    return [];
+  }
+
+  // Map over books and ensure author is not undefined
+  return books.map((book) => {
+    // Ensure book.author is defined before accessing its properties
+    const author = book.author
+      ? {
+          id: book.author.id,
+          firstName: book.author.firstName,
+          lastName: book.author.lastName,
+        }
+      : null;
+
+    return {
+      id: book.id,
+      title: book.title,
+      isFiction: book.isFiction,
+      datePublished: book.datePublished,
+      author: author,
+    };
   });
 };
 
