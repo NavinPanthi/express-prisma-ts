@@ -8,15 +8,32 @@
 import express from "express";
 import { Request, Response } from "express";
 import * as dotenv from "dotenv";
-
+var cors = require("cors");
+var multer = require("multer");
 dotenv.config(); //load environment variables from a .env file into process.env.
 const jwt = require("jsonwebtoken");
 import * as UserService from "../user/user.service";
 import { body, validationResult } from "express-validator";
-
+const verifyToken = require("../middleware/verifyToken");
+import path from "path";
 export const userRouter = express.Router();
 const bcrypt = require("bcrypt");
 let accessTokens: any = [];
+
+const storage = multer.diskStorage({
+  destination: (req: Request, file: Response, cb: any) => {
+    cb(null, "public/images");
+  },
+  filename: (req: Request, file: any, cb: any) => {
+    cb(
+      null,
+      file.fieldname + "_" + Date.now() + path.extname(file.originalname)
+    );
+  },
+});
+const upload = multer({
+  storage: storage,
+});
 
 // GET : list of all users
 userRouter.get("/", async (response: Response) => {
@@ -105,7 +122,7 @@ userRouter.post(
       );
 
       if (!isMatch && user.password !== userExists.data?.password) {
-        return response.status(401).json({ error: "Invalid credentials" });
+        return response.status(401).json({ error: "Invalid Credentials" });
       }
       const userPayLoad = { id: userExists.data?.id };
       const accessToken = generateToken(userPayLoad);
@@ -113,7 +130,7 @@ userRouter.post(
       const userWithToken = {
         status: true,
         data: {
-          ...userExists.data,
+          user: userExists.data,
           token: {
             access_token: accessToken,
             token_type: "Bearer",
@@ -130,6 +147,7 @@ userRouter.post(
 // DELETE : delete all users
 userRouter.patch(
   "/change-password",
+  verifyToken,
   body("userId").isInt().notEmpty(),
   body("oldPassword").trim().isString().notEmpty(),
   body("newPassword").trim().isString().notEmpty(),
@@ -146,9 +164,10 @@ userRouter.patch(
       }
       const isMatch = await bcrypt.compare(oldPassword, user.data?.password);
       if (!isMatch && oldPassword !== user.data?.password) {
-        return response
-          .status(401)
-          .json({ error: "Old password is incorrect" });
+        return response.status(401).json({
+          error:
+            "Your current password does not match with the password you provided. Please try again.",
+        });
       }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await UserService.updateUser(userId, {
@@ -156,7 +175,7 @@ userRouter.patch(
       });
       return response
         .status(200)
-        .json({ message: "Password changed successfully" });
+        .json({ status: true, message: "Password changed successfully" });
     } catch (error: any) {
       return response.status(500).json(error.message);
     }
@@ -175,8 +194,40 @@ userRouter.post(
     try {
       const { email, newPassword } = request.body;
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      const message = await UserService.resetPassword(email, newPassword);
+      const message = await UserService.resetPassword(email, hashedPassword);
       return response.status(200).json({ message });
+    } catch (error: any) {
+      return response.status(500).json(error.message);
+    }
+  }
+);
+userRouter.patch(
+  "/update-profile",
+  upload.single("image"),
+  verifyToken,
+  body("userId").isInt().notEmpty(),
+  async (request: Request, response: Response) => {
+    const image = request.file?.filename;
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      return response.status(400).json({ errors: errors.array() });
+    }
+    try {
+      const { userId } = request.body;
+      const parsedUserId = parseInt(userId, 10); // Convert userId to integer
+      const user = await UserService.getUser(userId);
+      if (!user) {
+        return response.status(404).json({ error: "User not found" });
+      }
+      const data = await UserService.updateUser(parsedUserId, {
+        image,
+      });
+      console.log(data);
+      return response.status(200).json({
+        status: true,
+        data: image,
+        message: "Profile updated successfully",
+      });
     } catch (error: any) {
       return response.status(500).json(error.message);
     }

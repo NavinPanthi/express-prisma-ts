@@ -240,6 +240,7 @@ export const updateUser = async (
   data: Partial<User>
 ): Promise<{ status: boolean; message: string; data: User | null }> => {
   try {
+    console.log("updating user", userId, data);
     const updatedUser = await db.user.update({
       where: {
         id: userId,
@@ -260,14 +261,14 @@ export const updateUser = async (
 
     return {
       status: true,
-      message: `Password of user with id ${userId} updated successfully`,
+      message: `User with id ${userId} updated successfully`,
       data: updatedUser,
     };
   } catch (error) {
     console.error("Error updating user:", error);
     return {
       status: false,
-      message: `Password of user with id ${userId} updated successfully`,
+      message: `User with id ${userId} not updated`,
       data: null,
     };
   }
