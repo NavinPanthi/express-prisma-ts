@@ -39,10 +39,15 @@ const upload = multer({
 userRouter.get("/", async (response: Response) => {
   try {
     const datas = await UserService.listUsers();
-    const { status, data } = datas;
-    if (data.length === 0) {
+    if (datas.data?.length === 0) {
       return response.status(400).json({ error: "No users found" });
     }
+    const userWithToken = {
+      status: true,
+      data: {
+        users: datas.data,
+      },
+    };
     return response.status(200).json(datas);
   } catch (error: any) {
     console.error("Error listing users", error);
@@ -51,15 +56,26 @@ userRouter.get("/", async (response: Response) => {
 });
 
 // GET : list of one user with matching id
-userRouter.get("/:id", async (request: Request, response: Response) => {
-  const id: number = parseInt(request.params.id, 10);
-  try {
-    const user = await UserService.getUser(id);
-    return response.status(200).json(user);
-  } catch (error: any) {
-    return response.status(500).json(error.message);
+userRouter.get(
+  "/:id",
+  verifyToken,
+  async (request: Request, response: Response) => {
+    const id: number = parseInt(request.params.id, 10);
+    try {
+      const user = await UserService.getUser(id);
+
+      const userWithToken = {
+        status: true,
+        data: {
+          user: user.data,
+        },
+      };
+      return response.status(200).json(userWithToken);
+    } catch (error: any) {
+      return response.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 // POST : create a new user
 userRouter.post(
@@ -219,13 +235,13 @@ userRouter.patch(
       if (!user) {
         return response.status(404).json({ error: "User not found" });
       }
-      const data = await UserService.updateUser(parsedUserId, {
+      await UserService.updateUser(parsedUserId, {
         image,
       });
-      console.log(data);
+
       return response.status(200).json({
         status: true,
-        data: image,
+        data: { user: user.data },
         message: "Profile updated successfully",
       });
     } catch (error: any) {

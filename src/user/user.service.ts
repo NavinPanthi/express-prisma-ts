@@ -183,7 +183,7 @@ export const loginUser = async (
 
 export const listUsers = async (): Promise<{
   status: boolean;
-  data: User[];
+  data: UserRead[] | null;
 }> => {
   try {
     const users = await db.user.findMany({
@@ -197,19 +197,40 @@ export const listUsers = async (): Promise<{
         gender: true,
         bio: true,
         image: true,
-        maritalStatusId: true,
+        maritalStatus: {
+          select: { id: true, title: true },
+        },
+        diversity: {
+          select: {
+            religion: {
+              select: { id: true, title: true },
+            },
+            city: {
+              select: { id: true, title: true },
+            },
+            country: {
+              select: { id: true, title: true },
+            },
+            motherTongue: {
+              select: { id: true, title: true },
+            },
+            community: {
+              select: { id: true, title: true },
+            },
+          },
+        },
       },
     });
 
     return { status: true, data: users };
   } catch (error) {
     // Handle errors here if needed
-    return { status: false, data: [] }; // Return an empty array if an error occurs
+    return { status: false, data: null }; // Return an empty array if an error occurs
   }
 };
 export const getUser = async (
   id: number
-): Promise<{ status: boolean; data: User | null }> => {
+): Promise<{ status: boolean; data: UserRead | null }> => {
   try {
     const user = await db.user.findUnique({
       where: {
@@ -225,6 +246,28 @@ export const getUser = async (
         gender: true,
         bio: true,
         image: true,
+        maritalStatus: {
+          select: { id: true, title: true },
+        },
+        diversity: {
+          select: {
+            religion: {
+              select: { id: true, title: true },
+            },
+            city: {
+              select: { id: true, title: true },
+            },
+            country: {
+              select: { id: true, title: true },
+            },
+            motherTongue: {
+              select: { id: true, title: true },
+            },
+            community: {
+              select: { id: true, title: true },
+            },
+          },
+        },
       },
     });
 
