@@ -274,6 +274,7 @@ export const getUser = async (
     return { status: true, data: user };
   } catch (error) {
     // Handle errors here if needed
+    console.log(error);
     return { status: false, data: null }; // Return null if an error occurs
   }
 };

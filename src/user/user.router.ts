@@ -36,7 +36,7 @@ const upload = multer({
 });
 
 // GET : list of all users
-userRouter.get("/", async (response: Response) => {
+userRouter.get("/", verifyToken, async (req: Request, response: Response) => {
   try {
     const datas = await UserService.listUsers();
     if (datas.data?.length === 0) {
@@ -48,7 +48,7 @@ userRouter.get("/", async (response: Response) => {
         users: datas.data,
       },
     };
-    return response.status(200).json(datas);
+    return response.status(200).json(userWithToken);
   } catch (error: any) {
     console.error("Error listing users", error);
     return response.status(500).json(error.message);
@@ -231,7 +231,8 @@ userRouter.patch(
     try {
       const { userId } = request.body;
       const parsedUserId = parseInt(userId, 10); // Convert userId to integer
-      const user = await UserService.getUser(userId);
+      const user = await UserService.getUser(parsedUserId);
+      console.log("user data and user", user.data, user);
       if (!user) {
         return response.status(404).json({ error: "User not found" });
       }
