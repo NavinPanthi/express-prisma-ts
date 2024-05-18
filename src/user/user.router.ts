@@ -18,6 +18,7 @@ const verifyToken = require("../middleware/verifyToken");
 import path from "path";
 export const userRouter = express.Router();
 const bcrypt = require("bcrypt");
+import { UserWriteAdditional } from "../user/user.service";
 let accessTokens: any = [];
 
 const storage = multer.diskStorage({
@@ -243,6 +244,86 @@ userRouter.patch(
       return response.status(200).json({
         status: true,
         data: { user: user.data },
+        message: "Profile updated successfully",
+      });
+    } catch (error: any) {
+      return response.status(500).json(error.message);
+    }
+  }
+);
+userRouter.patch(
+  "/update-details",
+  verifyToken,
+  body("userId").isInt().notEmpty(),
+  body("firstName").isString().notEmpty(),
+  body("lastName").isString().notEmpty(),
+  body("maritalStatusId").isNumeric().notEmpty(),
+  body("gender").isString().notEmpty(),
+  body("dateOfBirth").isDate().notEmpty(),
+  body("religionId").isNumeric().notEmpty(),
+  body("cityId").isNumeric().notEmpty(),
+  body("countryId").isNumeric().notEmpty(),
+  body("motherTongueId").isNumeric().notEmpty(),
+  body("communityId").isNumeric().notEmpty(),
+  body("bio").optional(),
+  body("astrologicalId").optional(),
+  body("facebookProfileLink").optional(),
+  body("contactNumber").optional(),
+  async (request: Request, response: Response) => {
+    const errors = validationResult(request);
+    if (!errors.isEmpty()) {
+      return response.status(400).json({ errors: errors.array() });
+    }
+    try {
+      const {
+        userId,
+        firstName,
+        lastName,
+        maritalStatusId,
+        gender,
+        dateOfBirth,
+        religionId,
+        cityId,
+        countryId,
+        motherTongueId,
+        communityId,
+        bio,
+        astrologicalId,
+        facebookProfileLink,
+        contactNumber,
+      } = request.body;
+      const parsedUserId = parseInt(userId, 10); // Convert userId to integer
+      const user = await UserService.getUser(parsedUserId);
+      console.log(user.data);
+      console.log("user data and user", user.data, user);
+      if (!user) {
+        return response.status(404).json({ error: "User not found" });
+      }
+      const updateData: Partial<UserWriteAdditional> = {
+        firstName,
+        lastName,
+        maritalStatusId,
+        gender,
+        dateOfBirth,
+        religionId,
+        cityId,
+        countryId,
+        motherTongueId,
+        communityId,
+        bio,
+        astrologicalId,
+        facebookProfileLink,
+        contactNumber,
+      };
+
+      const { status, message, data } = await UserService.updateUserDetails(
+        parsedUserId,
+        updateData
+      );
+
+      return response.status(200).json({
+        status: true,
+        data: { user: data },
         message: "Profile updated successfully",
       });
     } catch (error: any) {

@@ -5,6 +5,14 @@ import { City } from "../city/city.service";
 import { Religion } from "../religion/religion.service";
 import { MotherTongue } from "../motherTongue/motherTongue.service";
 import { MaritalStatus } from "../maritalStatus/maritalStatus.service";
+import { Astrology } from "../astrology/astrology.service";
+// import { AdditionalDetail } from "@prisma/client";
+interface AdditionalDetail {
+  astrology: Astrology | null;
+  facebookProfileLink: string;
+  contactNumber: string;
+}
+
 interface User {
   id: number;
   email: string;
@@ -16,7 +24,7 @@ interface User {
   bio: string;
   image: string;
 }
-interface UserWrite extends User {
+export interface UserWrite extends User {
   religionId: number;
   cityId: number;
   countryId: number;
@@ -35,16 +43,23 @@ interface UserRead extends User {
   diversity: Diversity | null;
   maritalStatus: MaritalStatus | null;
 }
+interface UserReadAdditional extends UserRead {
+  additionalDetail: AdditionalDetail | null;
+}
 type UserLogin = {
   email: string;
   password: string;
 };
-
+export interface UserWriteAdditional extends UserWrite {
+  astrologicalId: number;
+  facebookProfileLink: string;
+  contactNumber: string;
+}
 export const createUser = async (
   user: Omit<UserWrite, "id">
 ): Promise<{
   status: boolean;
-  data: UserRead;
+  data: UserReadAdditional;
 }> => {
   const {
     email,
@@ -117,6 +132,15 @@ export const createUser = async (
             },
           },
         },
+        additionalDetail: {
+          select: {
+            astrology: {
+              select: { id: true, title: true },
+            },
+            facebookProfileLink: true,
+            contactNumber: true,
+          },
+        },
       },
     });
     return { status: true, data: newUser };
@@ -130,7 +154,7 @@ export const loginUser = async (
   user: UserLogin
 ): Promise<{
   status: boolean;
-  data: UserRead | null;
+  data: UserReadAdditional | null;
 }> => {
   //   const { email, firstName, lastName, password } = user;
   const { email } = user;
@@ -171,6 +195,15 @@ export const loginUser = async (
             },
           },
         },
+        additionalDetail: {
+          select: {
+            astrology: {
+              select: { id: true, title: true },
+            },
+            facebookProfileLink: true,
+            contactNumber: true,
+          },
+        },
       },
     });
 
@@ -183,7 +216,7 @@ export const loginUser = async (
 
 export const listUsers = async (): Promise<{
   status: boolean;
-  data: UserRead[] | null;
+  data: UserReadAdditional[] | null;
 }> => {
   try {
     const users = await db.user.findMany({
@@ -219,6 +252,15 @@ export const listUsers = async (): Promise<{
             },
           },
         },
+        additionalDetail: {
+          select: {
+            astrology: {
+              select: { id: true, title: true },
+            },
+            facebookProfileLink: true,
+            contactNumber: true,
+          },
+        },
       },
     });
 
@@ -230,7 +272,7 @@ export const listUsers = async (): Promise<{
 };
 export const getUser = async (
   id: number
-): Promise<{ status: boolean; data: UserRead | null }> => {
+): Promise<{ status: boolean; data: UserReadAdditional | null }> => {
   try {
     const user = await db.user.findUnique({
       where: {
@@ -266,6 +308,15 @@ export const getUser = async (
             community: {
               select: { id: true, title: true },
             },
+          },
+        },
+        additionalDetail: {
+          select: {
+            astrology: {
+              select: { id: true, title: true },
+            },
+            facebookProfileLink: true,
+            contactNumber: true,
           },
         },
       },
@@ -347,7 +398,269 @@ export const resetPassword = async (
   }
 };
 
-// service for deleting users
-export const deleteUsers = async (): Promise<void> => {
-  await db.user.deleteMany({});
+// export const updateUserDetails = async (
+//   userId: number,
+//   data: Partial<UserWriteAdditional>
+// ): Promise<{
+//   status: boolean;
+//   message: string;
+//   data: UserReadAdditional | null;
+// }> => {
+//   try {
+//     console.log("updating user", userId, data);
+//     const {
+//       firstName,
+//       lastName,
+//       maritalStatusId,
+//       gender,
+//       dateOfBirth,
+//       religionId,
+//       cityId,
+//       countryId,
+//       motherTongueId,
+//       communityId,
+//       bio,
+//       astrologicalId,
+//       facebookProfileLink,
+//       contactNumber,
+//     } = data;
+
+//     let parsedDate: Date = new Date();
+//     if (dateOfBirth !== undefined) {
+//       parsedDate = new Date(dateOfBirth);
+//     }
+
+//     const updateData = {
+//       firstName,
+//       lastName,
+//       maritalStatusId,
+//       gender,
+//       dateOfBirth: parsedDate,
+//       bio,
+//       diversity: {
+//         update: {
+//           religionId,
+//           cityId,
+//           countryId,
+//           motherTongueId,
+//           communityId,
+//         },
+//       },
+//       additionalDetail: {
+//         upsert: {
+//           create: {
+//             astrologicalId: astrologicalId ?? 0,
+//             facebookProfileLink: facebookProfileLink ?? "no link or number",
+//             contactNumber: contactNumber ?? "no link or number",
+//           },
+//           update: {
+//             astrologicalId,
+//             facebookProfileLink,
+//             contactNumber,
+//           },
+//         },
+//       },
+//     };
+
+//     const updatedUser = await db.user.update({
+//       where: {
+//         id: userId,
+//       },
+//       data: updateData,
+//       select: {
+//         id: true,
+//         email: true,
+//         firstName: true,
+//         lastName: true,
+//         password: true,
+//         dateOfBirth: true,
+//         gender: true,
+//         bio: true,
+//         image: true,
+//         maritalStatus: {
+//           select: { id: true, title: true },
+//         },
+//         diversity: {
+//           select: {
+//             religion: {
+//               select: { id: true, title: true },
+//             },
+//             city: {
+//               select: { id: true, title: true },
+//             },
+//             country: {
+//               select: { id: true, title: true },
+//             },
+//             motherTongue: {
+//               select: { id: true, title: true },
+//             },
+//             community: {
+//               select: { id: true, title: true },
+//             },
+//           },
+//         },
+//         additionalDetail: {
+//           select: {
+//             astrology: {
+//               select: { id: true, title: true },
+//             },
+//             facebookProfileLink: true,
+//             contactNumber: true,
+//           },
+//         },
+//       },
+//     });
+
+//     return {
+//       status: true,
+//       message: `User with id ${userId} updated successfully`,
+//       data: updatedUser || null,
+//     };
+//   } catch (error) {
+//     console.error("Error updating user:", error);
+//     return {
+//       status: false,
+//       message: `User with id ${userId} not updated`,
+//       data: null,
+//     };
+//   }
+// };
+export const updateUserDetails = async (
+  userId: number,
+  data: Partial<UserWriteAdditional>
+): Promise<{
+  status: boolean;
+  message: string;
+  data: UserReadAdditional | null;
+}> => {
+  try {
+    console.log("updating user", userId, data);
+    const {
+      firstName,
+      lastName,
+      maritalStatusId,
+      gender,
+      dateOfBirth,
+      religionId,
+      cityId,
+      countryId,
+      motherTongueId,
+      communityId,
+      bio,
+      astrologicalId,
+      facebookProfileLink,
+      contactNumber,
+    } = data;
+
+    let parsedDate: Date = new Date();
+    if (dateOfBirth !== undefined) {
+      parsedDate = new Date(dateOfBirth);
+    }
+
+    // Dynamically construct the update data object
+    const updateData: any = {
+      firstName,
+      lastName,
+      maritalStatusId,
+      gender,
+      dateOfBirth: parsedDate,
+      bio,
+      diversity: {
+        update: {
+          religionId,
+          cityId,
+          countryId,
+          motherTongueId,
+          communityId,
+        },
+      },
+      additionalDetail: {
+        upsert: {
+          create: {},
+          update: {},
+        },
+      },
+    };
+
+    if (astrologicalId !== undefined) {
+      updateData.additionalDetail.upsert.create.astrologicalId =
+        astrologicalId ?? 0;
+      updateData.additionalDetail.upsert.update.astrologicalId = astrologicalId;
+    }
+
+    if (facebookProfileLink !== undefined) {
+      updateData.additionalDetail.upsert.create.facebookProfileLink =
+        facebookProfileLink ?? "no link or number";
+      updateData.additionalDetail.upsert.update.facebookProfileLink =
+        facebookProfileLink;
+    }
+
+    if (contactNumber !== undefined) {
+      updateData.additionalDetail.upsert.create.contactNumber =
+        contactNumber ?? "no link or number";
+      updateData.additionalDetail.upsert.update.contactNumber = contactNumber;
+    }
+
+    const updatedUser = await db.user.update({
+      where: {
+        id: userId,
+      },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        password: true,
+        dateOfBirth: true,
+        gender: true,
+        bio: true,
+        image: true,
+        maritalStatus: {
+          select: { id: true, title: true },
+        },
+        diversity: {
+          select: {
+            religion: {
+              select: { id: true, title: true },
+            },
+            city: {
+              select: { id: true, title: true },
+            },
+            country: {
+              select: { id: true, title: true },
+            },
+            motherTongue: {
+              select: { id: true, title: true },
+            },
+            community: {
+              select: { id: true, title: true },
+            },
+          },
+        },
+        additionalDetail: {
+          select: {
+            astrology: {
+              select: { id: true, title: true },
+            },
+            facebookProfileLink: true,
+            contactNumber: true,
+          },
+        },
+      },
+    });
+
+    return {
+      status: true,
+      message: `User with id ${userId} updated successfully`,
+      data: updatedUser || null,
+    };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return {
+      status: false,
+      message: `User with id ${userId} not updated`,
+      data: null,
+    };
+  }
 };
