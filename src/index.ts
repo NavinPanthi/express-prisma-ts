@@ -11,6 +11,7 @@ import { communityRouter } from "./community/community.router";
 import { religionRouter } from "./religion/religion.router";
 import { motherTongueRouter } from "./motherTongue/motherTongue.router";
 import { cityRouter } from "./city/city.router";
+import { astrologyRouter } from "./astrology/astrology.router";
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use("/api/city", cityRouter);
 app.use("/api/religion", religionRouter);
 app.use("/api/mother-tongue", motherTongueRouter);
 app.use("/api/community", communityRouter);
+app.use("/api/astrology", astrologyRouter);
 
 // Throw error if server is not running
 server.on("error", (err) => {

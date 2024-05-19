@@ -335,7 +335,6 @@ export const updateUser = async (
   data: Partial<User>
 ): Promise<{ status: boolean; message: string; data: User | null }> => {
   try {
-    console.log("updating user", userId, data);
     const updatedUser = await db.user.update({
       where: {
         id: userId,
@@ -534,7 +533,6 @@ export const updateUserDetails = async (
   data: UserReadAdditional | null;
 }> => {
   try {
-    console.log("updating user", userId, data);
     const {
       firstName,
       lastName,

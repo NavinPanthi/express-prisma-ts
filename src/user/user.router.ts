@@ -233,7 +233,7 @@ userRouter.patch(
       const { userId } = request.body;
       const parsedUserId = parseInt(userId, 10); // Convert userId to integer
       const user = await UserService.getUser(parsedUserId);
-      console.log("user data and user", user.data, user);
+
       if (!user) {
         return response.status(404).json({ error: "User not found" });
       }
@@ -244,7 +244,7 @@ userRouter.patch(
       return response.status(200).json({
         status: true,
         data: { user: user.data },
-        message: "Profile updated successfully",
+        message: "Photo updated successfully",
       });
     } catch (error: any) {
       return response.status(500).json(error.message);
@@ -294,8 +294,8 @@ userRouter.patch(
       } = request.body;
       const parsedUserId = parseInt(userId, 10); // Convert userId to integer
       const user = await UserService.getUser(parsedUserId);
-      console.log(user.data);
-      console.log("user data and user", user.data, user);
+
+
       if (!user) {
         return response.status(404).json({ error: "User not found" });
       }

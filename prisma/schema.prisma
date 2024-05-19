@@ -11,22 +11,24 @@ datasource db {
 }
 
 model User {
-  id                Int               @id @default(autoincrement())
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  email             String            @unique
-  firstName         String
-  lastName          String
-  dateOfBirth       DateTime
-  gender            String
-  bio               String            @db.Text
-  image             String
-  maritalStatus     MaritalStatus     @relation(fields: [maritalStatusId], references: [id])
-  maritalStatusId   Int
-  password          String
-  diversity         Diversity?
-  additionalDetail AdditionalDetail?
-  userPreferences   UserPreference?
+  id                  Int               @id @default(autoincrement())
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  email               String            @unique
+  firstName           String
+  lastName            String
+  dateOfBirth         DateTime
+  gender              String
+  bio                 String            @db.Text
+  image               String
+  maritalStatus       MaritalStatus     @relation(fields: [maritalStatusId], references: [id])
+  maritalStatusId     Int
+  password            String
+  diversity           Diversity?
+  additionalDetail    AdditionalDetail?
+  Preference          Preference?
+  sentConnections     Connection[]      @relation(name: "SentConnections")
+  receivedConnections Connection[]      @relation(name: "ReceivedConnections")
 }
 
 model Diversity {
@@ -46,95 +48,91 @@ model Diversity {
 }
 
 model AdditionalDetail {
-  id                  Int        @id @default(autoincrement())
-  userId              Int        @unique
-  user                User       @relation(fields: [userId], references: [id])
-  astrology        Astrology  @relation(fields: [astrologicalId], references: [id])
-  astrologicalId      Int  @default(0)
+  id                  Int       @id @default(autoincrement())
+  userId              Int       @unique
+  user                User      @relation(fields: [userId], references: [id])
+  astrology           Astrology @relation(fields: [astrologicalId], references: [id])
+  astrologicalId      Int       @default(0)
   facebookProfileLink String
   contactNumber       String
 }
 
-model UserPreference {
-  id                 Int                  @id @default(autoincrement())
-  userId             Int                  @unique
-  user               User                 @relation(fields: [userId], references: [id])
-  gender             String
-  minAge             Int
-  maxAge             Int
-  astrology       Astrology            @relation(fields: [astrologicalId], references: [id])
-  astrologicalId     Int @default(0)
-  maritalStatus      MaritalStatus        @relation(fields: [maritalStatusId], references: [id])
-  maritalStatusId    Int
-  preferredDiversity PreferredDiversity[]
-}
-
-model PreferredDiversity {
-  id                Int            @id @default(autoincrement())
-  userPreferencesId Int
-  userPreference    UserPreference @relation(fields: [userPreferencesId], references: [id])
-  country           Country        @relation(fields: [countryId], references: [id])
-  countryId         Int
-  city              City           @relation(fields: [cityId], references: [id])
-  cityId            Int
-  motherTongue      MotherTongue   @relation(fields: [motherTongueId], references: [id])
-  motherTongueId    Int
-  community         Community      @relation(fields: [communityId], references: [id])
-  communityId       Int
-  religion          Religion       @relation(fields: [religionId], references: [id])
-  religionId        Int
+model Preference {
+  id              Int           @id @default(autoincrement())
+  userId          Int           @unique
+  user            User          @relation(fields: [userId], references: [id])
+  country         Country       @relation(fields: [countryId], references: [id])
+  countryId       Int
+  city            City          @relation(fields: [cityId], references: [id])
+  cityId          Int
+  motherTongue    MotherTongue  @relation(fields: [motherTongueId], references: [id])
+  motherTongueId  Int
+  community       Community     @relation(fields: [communityId], references: [id])
+  communityId     Int
+  religion        Religion      @relation(fields: [religionId], references: [id])
+  religionId      Int
+  maritalStatus   MaritalStatus @relation(fields: [maritalStatusId], references: [id])
+  maritalStatusId Int
 }
 
 model MaritalStatus {
-  id             Int              @id @default(autoincrement())
-  title          String           @unique
-  users          User[]
-  UserPreference UserPreference[]
+  id         Int          @id @default(autoincrement())
+  title      String       @unique
+  users      User[]
+  Preference Preference[]
 }
 
 model Religion {
-  id                 Int                  @id @default(autoincrement())
-  title              String               @unique
-  Diversity          Diversity[]
-  PreferredDiversity PreferredDiversity[]
+  id         Int          @id @default(autoincrement())
+  title      String       @unique
+  Diversity  Diversity[]
+  Preference Preference[]
 }
 
 model Country {
-  id                 Int                  @id @default(autoincrement())
-  title              String               @unique
-  cities             City[]
-  Diversity          Diversity[]
-  PreferredDiversity PreferredDiversity[]
+  id         Int          @id @default(autoincrement())
+  title      String       @unique
+  cities     City[]
+  Diversity  Diversity[]
+  Preference Preference[]
 }
 
 model City {
-  id                 Int                  @id @default(autoincrement())
-  title              String               @unique
-  country            Country              @relation(fields: [countryId], references: [id])
-  countryId          Int
-  Diversity          Diversity[]
-  PreferredDiversity PreferredDiversity[]
+  id         Int          @id @default(autoincrement())
+  title      String       @unique
+  country    Country      @relation(fields: [countryId], references: [id])
+  countryId  Int
+  Diversity  Diversity[]
+  Preference Preference[]
 }
 
 model Community {
-  id                 Int                  @id @default(autoincrement())
-  title              String               @unique
-  Diversity          Diversity[]
-  PreferredDiversity PreferredDiversity[]
+  id         Int          @id @default(autoincrement())
+  title      String       @unique
+  Diversity  Diversity[]
+  Preference Preference[]
 }
 
 model MotherTongue {
-  id                 Int                  @id @default(autoincrement())
-  title              String               @unique
-  Diversity          Diversity[]
-  PreferredDiversity PreferredDiversity[]
+  id         Int          @id @default(autoincrement())
+  title      String       @unique
+  Diversity  Diversity[]
+  Preference Preference[]
 }
 
 model Astrology {
   id               Int                @id @default(autoincrement())
   title            String             @unique
   AdditionalDetail AdditionalDetail[]
-  UserPreference   UserPreference[]
 }
 
-
+model Connection {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sentById     Int
+  sentBy       User     @relation(name: "SentConnections", fields: [sentById], references: [id])
+  receivedById Int
+  receivedBy   User     @relation(name: "ReceivedConnections", fields: [receivedById], references: [id])
+  status       String
+}
